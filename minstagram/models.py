@@ -1,6 +1,6 @@
 # -*-encoding=UTF-8-*-
 
-from minstagram import db
+from minstagram import db, login_manager
 from random import randint
 from datetime import datetime
 
@@ -39,17 +39,38 @@ class User(db.Model):
 	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 	username = db.Column(db.String(64), unique=True)
 	password = db.Column(db.String(32))
+	salt = db.Column(db.String(32))
 	email = db.Column(db.String(64), unique=True)
 	phone_number = db.Column(db.Integer, unique=True)
 	head_url = db.Column(db.String(128))
 	images = db.relationship('Image', backref='user', lazy='dynamic')
 
-	def __init__(self, username, password, email, phone_number):
+	@property
+	def is_authenticated(self):
+		return True
+
+	@property
+	def is_active(self):
+		return True
+
+	@property
+	def is_anonymous(self):
+		return False;
+
+	def get_id(self):
+		return self.id
+
+	def __init__(self, username, password, salt=None, email=None, phone_number=None):
 		self.username = username
 		self.password = password
+		self.salt = salt
 		self.email = email
 		self.phone_number = phone_number
 		self.head_url = 'http://images.nowcoder.com/head/'+str(randint(0, 100))+'m.png'
 
 	def __repr__(self):
 		return '<User %d %s>' %(self.id, self.username)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
