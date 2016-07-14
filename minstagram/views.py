@@ -9,7 +9,7 @@ from qiniusdk import qiniu_uplod_file
 
 @app.route('/')
 def index():
-	paginate = Image.query.order_by('id desc').paginate(page=1, per_page=10, error_out=False)
+	paginate = Image.query.order_by('id desc').paginate(page=1, per_page=5, error_out=False)
 	return render_template('index.html', images=paginate.items, has_next=paginate.has_next)
 
 
@@ -165,13 +165,12 @@ def save_to_local(file, filename):
 @app.route('/image/<image_name>')
 def view_image(image_name):
 	return send_from_directory(app.config['QINIU_DOMAIN_PREFIX'], image_name)
+	#return send_from_directory(app.config['UPLOAD_DIR'], image_name)
 
 @app.route('/upload/', methods={"post"})
 @login_required
 def upload():
-	print request.files
 	file = request.files["file"]
-	print file
 	file_exp = ''
 	if '.' in file.filename:
 		file_exp = file.filename.rsplit('.', 1)[1].strip().lower()
@@ -187,14 +186,40 @@ def upload():
 
 	return redirect('profile/%d' %current_user.id)
 
+@app.route('/headupload/', methods={'post'})
+def headupload():
+	file1 = request.files["file1"]
+	file_exp = ''
+	
+	if '.' in file1.filename:
+		file_exp = file1.filename.rsplit('.', 1)[1].strip().lower()
+	if file_exp in app.config['ALLOWED_EXTENSIONS']:
+		file_name1 = str(uuid.uuid1()).replace('-', '')+'.'+file_exp
+	else:
+		return redirect('profile/%d' % current_user.id)
+
+	headurl = qiniu_uplod_file(file1, file_name1)
+	if headurl!=None:
+		user = User.query.filter_by(id=current_user.id).first()
+		user.head_url = headurl
+		db.session.commit()
+
+	return redirect('profile/%d' %current_user.id)
+
 @app.route('/addcomment/', methods={'post'})
+@login_required
 def add_comment():
 	image_id = int(request.values['image_id'])
 	content = request.values['content']
 	comment = Comment(content, current_user.id, image_id)
 	db.session.add(comment)
 	db.session.commit()
-	return json.dumps({"code":0, "id":comment.id, "content":content,
+
+	#code 1: 未登录
+	if current_user.is_active is False:
+		return json.dumps({"code":1})
+	return json.dumps({"code":0,
+					   "id":comment.id, "content":content,
 					   "username":comment.user.username,
 					   "user_id":comment.user.id})
 

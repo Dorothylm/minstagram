@@ -14,7 +14,7 @@ def get_image_url():
 
 @manage.command
 def init_datebase():
-	db.drop_all()
+	#db.drop_all()
 	db.create_all()
 	for i in range(0, 100):
 		db.session.add(User('profile'+str(i+1), 'password'+str(i+1), '', 'email'+str(i+1), 18700+i+1))
@@ -25,7 +25,7 @@ def init_datebase():
 
 	db.session.commit()
 
-	image = Image.query.get(1)
+
 	comment = Comment.query.get(1)
 
 	print comment.user
@@ -39,9 +39,13 @@ def test():
 										   {"username": "profile100", "content": "This is a comment1",
 											"user_id": 100}]}]}
 
-	print test["images"][0]["comments"][0]["username"]
-	print request.files
-	print dir(request.files)
+	#print test["images"][0]["comments"][0]["username"]
+	#print request.files
+	#print dir(request.files)
+	image = Image.query.filter_by(id=1).first()
+	image.url = ssdfd
+	print image
+
 
 
 

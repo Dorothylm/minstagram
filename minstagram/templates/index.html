@@ -30,7 +30,7 @@
                 <span> 次播放</span>
             </section>
             -->
-            <ul class="discuss-list">
+            <ul class="discuss-list js-discuss-list">
                 <!--
                 <li>
                     <h1>
@@ -55,7 +55,7 @@
 
                 {% for comment in image.comments %}
                 {% if loop.index>2 %}{% break %}
-                {% endif%}
+                {% endif %}
                 <!--
                 -->
                 <li>
@@ -67,24 +67,25 @@
                 </li>
                 {% endfor %}
             </ul>
+
             <section class="discuss-edit">
                 <a class="icon-heart"></a>
                 <form>
-                    <input placeholder="添加评论..." type="text">
+                    <input placeholder="添加评论..." id="jsCmt" type="text">
                 </form>
-                <button class="more-info">更多选项</button>
+                <button class="more-info" id="jsSubmit">更多选项</button>
             </section>
         </div>
     </article>
-    {% endfor %}
+{% endfor %}
     </div>
     {% if has_next %}
     <div class="more-content js-load-more">
         <a class="_oidfu" href="javascript:void(0);">更多</a>
     </div>
     {% else %}
-     <div class="more-content">
-        <a class="_oidfu">添加图片</a>
+     <div class="more-content js-load-more">
+        <a class="_oidfu" href="javascript:void(0);">添加图片</a>
     </div>
     {% endif %}
 </div>

@@ -18,7 +18,7 @@ $(function () {
         // 初始化数据
         that.uid = window.uid;
         that.page = 1;
-        that.pageSize = 10;
+        that.pageSize = 5;
         that.listHasNext = true;
         // 绑定事件
         $('.js-load-more').on('click', function (oEvent) {
@@ -55,8 +55,9 @@ $(function () {
                 // 更新当前页面
                 that.page++;
                 // 渲染数据
+                var image = oResult.images;
                 var sHtml = '';
-                $.each(oResult.images ,function (nIndex, oImage) {
+                $.each(oResult.images,function (nIndex, oImage) {
                     sHtml += that.tpl([
                         '<div>',
                         '<article class="mod">',
@@ -76,31 +77,31 @@ $(function () {
                                     '</a>',
                                 '</div>',
                             '</div>',
-                            '<div class="mod-ft">',
-                                '<ul class="discuss-list">',
-                                    '<li class="more-discuss">',
-                                        '<a>',
-                                        '<span>全部 </span><span class="">#{comments_count}</span>',
-                                        '<span> 条评论</span></a>',
-                                    '</li>',
-                                    '<li>',
-                                    '<a class=" icon-remove" title="删除评论"></a>',
-                                    '<a class="_4zhc5 _iqaka" title="#{comments}[0].username" href="/profile/#{comments}[0].user_id" data-reactid=".0.1.0.0.0.2.1.2:$comment-17856951190001917.1">#{comments}.username</a>',
-                                    '<span>',
-                                        '<span>#{comments}.content</span>',
-                                    '</span>',
-                                    '</li>',
-                                '</ul>',
-                                '<section class="discuss-edit">',
-                                    '<a class="icon-heart"></a>',
-                                    '<form>',
-                                        '<input placeholder="添加评论..." type="text">',
-                                    '</form>',
-                                    '<button class="more-info">更多选项</button>',
-                                '</section>',
-                            '</div>',
+                        '<div class="mod-ft">',
+                        '<ul class="discuss-list">',
+                        '<li class="more-discuss">',
+                        '<a>',
+                        '<span>全部 </span><span class="">#{comments_count}</span>',
+                        '<span> 条评论</span></a>',
+                        '</li>',
+                        '<li>',
+                        '<a class=" icon-remove" title="删除评论"></a>',
+                        '<a class="_4zhc5 _iqaka" title="#{username}" href="/profile/#{user_id}" data-reactid=".0.1.0.0.0.2.1.2:$comment-17856951190001917.1">#{username}</a>',
+                        '<span>',
+                        '<span>#{content}</span>',
+                        '</span>',
+                        '</li>',
+                        '</ul>',
+                        '<section class="discuss-edit">',
+                        '<a class="icon-heart"></a>',
+                        '<form>',
+                        '<input placeholder="添加评论..." type="text">',
+                        '</form>',
+                        '<button class="more-info">更多选项</button>',
+                        '</section>',
+                        '</div>',
                         '</article>',
-                    '</div>'].join(''), oImage);
+                        '</div>'].join(''), oImage);
                 });
                 sHtml && that.listEl.append(sHtml);
             },
@@ -124,4 +125,70 @@ $(function () {
             return oData[sName] === undefined || oData[sName] === null ? '' : oData[sName];
         });
     }
+});
+
+$(function () {
+    var oExports = {
+        initialize: fInitialize,
+        encode: fEncode
+    };
+    oExports.initialize();
+
+    function fInitialize() {
+        var that = this;
+        var sImageId = window.imageId;
+        var oCmtIpt = $('#jsCmt');
+        var oListDv = $('ul.js-discuss-list');
+
+        // 点击添加评论
+        var bSubmit = false;
+        $('#jsSubmit').on('click', function () {
+            var sCmt = $.trim(oCmtIpt.val());
+            // 评论为空不能提交
+            if (!sCmt) {
+                return alert('评论不能为空');
+            }
+            // 上一个提交没结束之前，不再提交新的评论
+            if (bSubmit) {
+                return;
+            }
+            bSubmit = true;
+            $.ajax({
+                url: '/addcomment/',
+                type: 'post',
+                dataType: 'json',
+                data: {image_id: sImageId, content: sCmt}
+            }).done(function (oResult) {
+                if(oResult.code == 1) {
+                    window.location = "/regloginpage/";
+                }
+                if (oResult.code !== 0) {
+                    return alert(oResult.msg || '提交失败，请重试');
+                }
+                // 清空输入框
+                oCmtIpt.val('');
+                // 渲染新的评论
+                var sHtml = [
+                    '<li>',
+                        '<a class="_4zhc5 _iqaka" title="', that.encode(oResult.username), '" href="/profile/', oResult.user_id, '">', that.encode(oResult.username), '</a> ',
+                        '<span><span>', that.encode(sCmt), '</span></span>',
+                    '</li>'].join('');
+                oListDv.prepend(sHtml);
+            }).fail(function (oResult) {
+                alert(oResult.msg || '提交失败，请重试');
+            }).always(function () {
+                bSubmit = false;
+            });
+        });
+    }
+
+    function fEncode(sStr, bDecode) {
+        var aReplace =["&#39;", "'", "&quot;", '"', "&nbsp;", " ", "&gt;", ">", "&lt;", "<", "&amp;", "&", "&yen;", "¥"];
+        !bDecode && aReplace.reverse();
+        for (var i = 0, l = aReplace.length; i < l; i += 2) {
+             sStr = sStr.replace(new RegExp(aReplace[i],'g'), aReplace[i+1]);
+        }
+        return sStr;
+    };
+
 });
